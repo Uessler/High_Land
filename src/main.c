@@ -2,9 +2,16 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+void Update();
+
+
+float dancing_number = 0;
+
+bool increasing = true;
 
 char* readShaderFile(const char* filepath) {
     FILE* file = fopen(filepath, "r");
@@ -62,7 +69,7 @@ int main()
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -113,9 +120,19 @@ int main()
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
+        Update();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        float vertices[] = {
+            dancing_number, -0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+            0.0f,  0.5f, 0.0f
+        };
+        
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
@@ -123,6 +140,7 @@ int main()
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        
     }
 
     glDeleteVertexArrays(1, &VAO);
@@ -142,4 +160,23 @@ void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, 1);
+}
+
+void Update() 
+{
+    // Primeiro, checamos os limites para decidir a direção
+    if (dancing_number >= 0.5f) {
+        increasing = false; // Bateu no teto, hora de descer
+    } 
+    else if (dancing_number <= -0.5f) {
+        increasing = true;  // Bateu no chão, hora de subir
+    }
+
+    // Depois, movemos o número suavemente dependendo da direção
+    if (increasing) {
+        dancing_number += 0.01f;
+    } 
+    else {
+        dancing_number -= 0.01f; // Tiramos o while e usamos apenas um if/else normal!
+    }
 }
